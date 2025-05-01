@@ -82,16 +82,9 @@ def collate_fn(batch: List[Tuple[List[int], List[int]]]) -> Dict[str, torch.Tens
     """
     Custom collate function to pad sequences in a batch.
     """
-    # Separate sources and targets
-    sources, targets = zip(*batch)
-
-    # Filter out any None or empty values
-    valid_pairs = [(s, t) for s, t in zip(sources, targets) if s and t]
-    if len(valid_pairs) != len(batch):
-        print(f"Warning: Found {len(batch) - len(valid_pairs)} invalid pairs in batch")
-
-    if not valid_pairs:
-        # Return empty tensors if no valid pairs
+    # Check for empty batch
+    if not batch:
+        print("Warning: Empty batch received")
         return {
             "src": torch.zeros((0, 0), dtype=torch.long),
             "tgt": torch.zeros((0, 0), dtype=torch.long),
@@ -100,30 +93,96 @@ def collate_fn(batch: List[Tuple[List[int], List[int]]]) -> Dict[str, torch.Tens
             "src_lengths": torch.zeros(0, dtype=torch.long),
             "tgt_lengths": torch.zeros(0, dtype=torch.long),
         }
-
-    # Use valid pairs only
-    sources, targets = zip(*valid_pairs)
-
-    # Convert to tensors and pad
-    src_tensors = [torch.tensor(s, dtype=torch.long) for s in sources]
-    tgt_tensors = [torch.tensor(t, dtype=torch.long) for t in targets]
-
-    # Padding
-    src_padded = pad_sequence(src_tensors, batch_first=True, padding_value=0)
-    tgt_padded = pad_sequence(tgt_tensors, batch_first=True, padding_value=0)
-
-    # Create source and target masks (1 for non-pad, 0 for pad)
-    src_mask = (src_padded != 0).float()
-    tgt_mask = (tgt_padded != 0).float()
-
-    return {
-        "src": src_padded,
-        "tgt": tgt_padded,
-        "src_mask": src_mask,
-        "tgt_mask": tgt_mask,
-        "src_lengths": torch.tensor([len(s) for s in sources], dtype=torch.long),
-        "tgt_lengths": torch.tensor([len(t) for t in targets], dtype=torch.long),
-    }
+    
+    try:
+        # Separate sources and targets
+        sources, targets = zip(*batch)
+        
+        # Filter out any None or empty values
+        valid_pairs = []
+        for i, (s, t) in enumerate(zip(sources, targets)):
+            if s is None or t is None:
+                print(f"Warning: None value in batch at index {i}")
+                continue
+            if len(s) == 0 or len(t) == 0:
+                print(f"Warning: Empty sequence in batch at index {i}")
+                continue
+            valid_pairs.append((s, t))
+        
+        if len(valid_pairs) != len(batch):
+            print(f"Warning: Found {len(batch) - len(valid_pairs)} invalid pairs in batch of size {len(batch)}")
+        
+        if not valid_pairs:
+            # Return empty tensors if no valid pairs
+            print("Warning: No valid pairs in batch")
+            return {
+                "src": torch.zeros((0, 0), dtype=torch.long),
+                "tgt": torch.zeros((0, 0), dtype=torch.long),
+                "src_mask": torch.zeros((0, 0), dtype=torch.float),
+                "tgt_mask": torch.zeros((0, 0), dtype=torch.float),
+                "src_lengths": torch.zeros(0, dtype=torch.long),
+                "tgt_lengths": torch.zeros(0, dtype=torch.long),
+            }
+        
+        # Use valid pairs only
+        sources, targets = zip(*valid_pairs)
+        
+        # Convert to tensors with additional error handling
+        src_tensors = []
+        tgt_tensors = []
+        
+        for i, (s, t) in enumerate(zip(sources, targets)):
+            try:
+                src_tensors.append(torch.tensor(s, dtype=torch.long))
+                tgt_tensors.append(torch.tensor(t, dtype=torch.long))
+            except Exception as e:
+                print(f"Error converting sequence {i} to tensor: {e}")
+                print(f"Source: {s}")
+                print(f"Target: {t}")
+        
+        if not src_tensors or not tgt_tensors:
+            print("Warning: Failed to convert any sequences to tensors")
+            return {
+                "src": torch.zeros((0, 0), dtype=torch.long),
+                "tgt": torch.zeros((0, 0), dtype=torch.long),
+                "src_mask": torch.zeros((0, 0), dtype=torch.float),
+                "tgt_mask": torch.zeros((0, 0), dtype=torch.float),
+                "src_lengths": torch.zeros(0, dtype=torch.long),
+                "tgt_lengths": torch.zeros(0, dtype=torch.long),
+            }
+        
+        # Padding
+        src_padded = pad_sequence(src_tensors, batch_first=True, padding_value=0)
+        tgt_padded = pad_sequence(tgt_tensors, batch_first=True, padding_value=0)
+        
+        # Create source and target masks (1 for non-pad, 0 for pad)
+        src_mask = (src_padded != 0).float()
+        tgt_mask = (tgt_padded != 0).float()
+        
+        # Get sequence lengths
+        src_lengths = torch.tensor([len(s) for s in sources], dtype=torch.long)
+        tgt_lengths = torch.tensor([len(t) for t in targets], dtype=torch.long)
+        
+        return {
+            "src": src_padded,
+            "tgt": tgt_padded,
+            "src_mask": src_mask,
+            "tgt_mask": tgt_mask,
+            "src_lengths": src_lengths,
+            "tgt_lengths": tgt_lengths,
+        }
+    
+    except Exception as e:
+        print(f"Error in collate_fn: {e}")
+        # Return empty tensors as fallback
+        return {
+            "src": torch.zeros((1, 1), dtype=torch.long),
+            "tgt": torch.zeros((1, 1), dtype=torch.long),
+            "src_mask": torch.zeros((1, 1), dtype=torch.float),
+            "tgt_mask": torch.zeros((1, 1), dtype=torch.float),
+            "src_lengths": torch.ones(1, dtype=torch.long),
+            "tgt_lengths": torch.ones(1, dtype=torch.long),
+        }
 
 
 def load_tokenizers(src_path: str, tgt_path: str) -> Tuple[Tokenizer, Tokenizer]:
@@ -134,12 +193,16 @@ def load_tokenizers(src_path: str, tgt_path: str) -> Tuple[Tokenizer, Tokenizer]
 
 
 def load_iwslt_data(
-    src_lang: str = "en", tgt_lang: str = "fr", split: str = "train"
+    src_lang: str = "en", tgt_lang: str = "fr", split: str = "train", cache_dir: str = None
 ) -> List[Tuple[str, str]]:
     """Load IWSLT dataset for the specified languages and split."""
     # The correct format is 'iwslt2017-src-tgt' for the config name
     config_name = f"iwslt2017-{src_lang}-{tgt_lang}"
-    dataset = load_dataset("iwslt2017", config_name, split=split)
+    
+    # Use cache directory if provided
+    print(f"Loading {config_name} dataset (split: {split})...")
+    dataset = load_dataset("iwslt2017", config_name, split=split, cache_dir=cache_dir)
+    print(f"Loaded {len(dataset)} examples from {config_name} dataset")
 
     # Extract sentence pairs
     pairs = []
@@ -156,9 +219,17 @@ def prepare_data(
     tgt_lang: str = "fr",
     batch_size: int = 32,
     max_length: int = 100,
+    cache_dir: str = None,
 ) -> Dict[str, Any]:
     """
     Prepare data for training and evaluation.
+
+    Args:
+        src_lang: Source language code
+        tgt_lang: Target language code
+        batch_size: Batch size for DataLoaders
+        max_length: Maximum sequence length
+        cache_dir: Directory to cache datasets
 
     Returns:
         Dictionary containing DataLoaders and tokenizers.
@@ -169,26 +240,36 @@ def prepare_data(
     )
 
     # Load datasets
-    train_pairs = load_iwslt_data(src_lang, tgt_lang, "train")
-    val_pairs = load_iwslt_data(src_lang, tgt_lang, "validation")
-    test_pairs = load_iwslt_data(src_lang, tgt_lang, "test")
+    train_pairs = load_iwslt_data(src_lang, tgt_lang, "train", cache_dir)
+    val_pairs = load_iwslt_data(src_lang, tgt_lang, "validation", cache_dir)
+    test_pairs = load_iwslt_data(src_lang, tgt_lang, "test", cache_dir)
 
     # Tokenize datasets
     def tokenize_pairs(pairs):
         src_tokenized = []
         tgt_tokenized = []
+        total_pairs = len(pairs)
+        filtered_pairs = 0
 
-        for src_text, tgt_text in pairs:
+        print(f"Tokenizing {total_pairs} sentence pairs...")
+        
+        for idx, (src_text, tgt_text) in enumerate(pairs):
+            # Print progress every 10000 pairs
+            if idx % 10000 == 0 and idx > 0:
+                print(f"Processed {idx}/{total_pairs} pairs ({filtered_pairs} filtered out)")
+            
             # Skip empty or None texts
-            if not src_text or not tgt_text:
+            if src_text is None or tgt_text is None or src_text == "" or tgt_text == "":
+                filtered_pairs += 1
                 continue
-
+                
             try:
                 src_tokens = src_tokenizer.encode(src_text).ids
                 tgt_tokens = tgt_tokenizer.encode(tgt_text).ids
 
-                # Skip if tokenization failed
+                # Skip if tokenization failed or resulted in empty lists
                 if not src_tokens or not tgt_tokens:
+                    filtered_pairs += 1
                     continue
 
                 # Truncate if needed
@@ -197,16 +278,26 @@ def prepare_data(
                 if len(tgt_tokens) > max_length:
                     tgt_tokens = tgt_tokens[:max_length]
 
+                # Add special tokens to target
+                bos_token = tgt_tokenizer.token_to_id("[BOS]")
+                eos_token = tgt_tokenizer.token_to_id("[EOS]")
+                
+                if bos_token is None or eos_token is None:
+                    print(f"Warning: Special tokens not found in target tokenizer")
+                    bos_token = 1  # Default BOS token
+                    eos_token = 2  # Default EOS token
+                
+                tgt_tokens_with_special = [bos_token] + tgt_tokens + [eos_token]
+                
                 src_tokenized.append(src_tokens)
-                tgt_tokenized.append(
-                    [tgt_tokenizer.token_to_id("[BOS]")]
-                    + tgt_tokens
-                    + [tgt_tokenizer.token_to_id("[EOS]")]
-                )
+                tgt_tokenized.append(tgt_tokens_with_special)
+                
             except Exception as e:
-                print(f"Error tokenizing pair: {e}")
+                print(f"Error tokenizing pair {idx}: {e}")
+                filtered_pairs += 1
                 continue
 
+        print(f"Tokenization complete: {len(src_tokenized)} pairs kept, {filtered_pairs} filtered out")
         return src_tokenized, tgt_tokenized
 
     # Tokenize all datasets

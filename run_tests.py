@@ -9,9 +9,13 @@ import argparse
 
 def main():
     """Run tests with pytest."""
-    parser = argparse.ArgumentParser(description="Run tests for the sequence-to-sequence model")
+    parser = argparse.ArgumentParser(
+        description="Run tests for the sequence-to-sequence model"
+    )
     parser.add_argument("--unit", action="store_true", help="Run unit tests only")
-    parser.add_argument("--integration", action="store_true", help="Run integration tests only")
+    parser.add_argument(
+        "--integration", action="store_true", help="Run integration tests only"
+    )
     parser.add_argument("--all", action="store_true", help="Run all tests")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
     args = parser.parse_args()

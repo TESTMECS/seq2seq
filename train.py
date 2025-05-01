@@ -43,8 +43,11 @@ def train_epoch(
     """
     model.train()
     epoch_loss = 0
-
-    for batch in tqdm(dataloader, desc="Training", leave=False):
+    total_batches = len(dataloader)
+    
+    progress_bar = tqdm(dataloader, desc="Training", leave=False)
+    
+    for batch_idx, batch in enumerate(progress_bar):
         # Get data
         src = batch["src"].to(device)  # [batch_size, src_len]
         tgt = batch["tgt"].to(device)  # [batch_size, tgt_len]
@@ -77,9 +80,24 @@ def train_epoch(
         optimizer.step()
 
         # Update epoch loss
-        epoch_loss += loss.item()
+        batch_loss = loss.item()
+        epoch_loss += batch_loss
+        
+        # Update progress bar
+        progress_bar.set_postfix({
+            'batch': f'{batch_idx+1}/{total_batches}',
+            'loss': f'{batch_loss:.4f}',
+            'avg_loss': f'{epoch_loss/(batch_idx+1):.4f}'
+        })
+        
+        # Print detailed batch info every 10 batches
+        if (batch_idx + 1) % 10 == 0 or batch_idx == 0:
+            avg_loss = epoch_loss / (batch_idx + 1)
+            print(f"Batch {batch_idx+1}/{total_batches} | Loss: {batch_loss:.4f} | Avg Loss: {avg_loss:.4f}")
 
-    return epoch_loss / len(dataloader)
+    avg_epoch_loss = epoch_loss / total_batches
+    print(f"Epoch completed | Avg Loss: {avg_epoch_loss:.4f}")
+    return avg_epoch_loss
 
 
 def evaluate(
@@ -102,9 +120,12 @@ def evaluate(
     """
     model.eval()
     epoch_loss = 0
+    total_batches = len(dataloader)
 
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Evaluating", leave=False):
+        progress_bar = tqdm(dataloader, desc="Evaluating", leave=False)
+        
+        for batch_idx, batch in enumerate(progress_bar):
             # Get data
             src = batch["src"].to(device)  # [batch_size, src_len]
             tgt = batch["tgt"].to(device)  # [batch_size, tgt_len]
@@ -125,9 +146,19 @@ def evaluate(
             loss = criterion(output, tgt)
 
             # Update epoch loss
-            epoch_loss += loss.item()
-
-    return epoch_loss / len(dataloader)
+            batch_loss = loss.item()
+            epoch_loss += batch_loss
+            
+            # Update progress bar
+            progress_bar.set_postfix({
+                'batch': f'{batch_idx+1}/{total_batches}',
+                'loss': f'{batch_loss:.4f}',
+                'avg_loss': f'{epoch_loss/(batch_idx+1):.4f}'
+            })
+    
+    avg_loss = epoch_loss / total_batches
+    print(f"Validation | Avg Loss: {avg_loss:.4f}")
+    return avg_loss
 
 
 def train(
@@ -219,27 +250,49 @@ def train(
     return history
 
 
-def plot_losses(history: Dict[str, List[float]], save_path: Optional[str] = None) -> None:
+def plot_losses(history: Dict[str, List[float]], save_path: Optional[str] = None, show_plot: bool = False) -> None:
     """
     Plot training and validation losses.
 
     Args:
         history: Dictionary containing training and validation losses
         save_path: Path to save the plot image
+        show_plot: Whether to display the plot interactively
     """
     plt.figure(figsize=(10, 6))
-    plt.plot(history["train_loss"], label="Train Loss")
-    plt.plot(history["val_loss"], label="Validation Loss")
+    epochs = range(1, len(history["train_loss"]) + 1)
+    
+    # Plot train and validation loss
+    plt.plot(epochs, history["train_loss"], 'bo-', label="Train Loss")
+    plt.plot(epochs, history["val_loss"], 'ro-', label="Validation Loss")
+    
+    # Add epoch numbers to x-axis
+    plt.xticks(epochs)
+    
+    # Add grid and styling
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.title("Training and Validation Loss")
     plt.legend()
     plt.grid(True)
 
+    # Print losses to console
+    print("\nLoss per epoch:")
+    print(f"{'Epoch':<6} | {'Train Loss':<12} | {'Val Loss':<12}")
+    print(f"{'-'*6}+{'-'*14}+{'-'*14}")
+    for i, (train_loss, val_loss) in enumerate(zip(history["train_loss"], history["val_loss"])):
+        print(f"{i+1:<6} | {train_loss:<12.4f} | {val_loss:<12.4f}")
+
+    # Save the plot
     if save_path:
         plt.savefig(save_path)
+        print(f"\nLoss plot saved to: {save_path}")
 
-    plt.show()
+    # Show the plot if requested
+    if show_plot:
+        plt.show()
+    else:
+        plt.close()
 
 
 def test_model(

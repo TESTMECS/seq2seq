@@ -141,7 +141,13 @@ def main():
     )
     parser.add_argument("--save_dir", type=str, default="models", help="Directory to save models")
     parser.add_argument(
+        "--cache_dir", type=str, default="a4-data/dataset", help="Directory to cache datasets"
+    )
+    parser.add_argument(
         "--test_only", action="store_true", help="Only test the model (no training)"
+    )
+    parser.add_argument(
+        "--show_plots", action="store_true", help="Show plots during training (default: False)"
     )
 
     args = parser.parse_args()
@@ -164,6 +170,7 @@ def main():
             tgt_lang=args.tgt_lang,
             batch_size=args.batch_size,
             max_length=args.max_length,
+            cache_dir=args.cache_dir,
         )
     except Exception as e:
         print(f"Error preparing data: {e}")
@@ -283,6 +290,7 @@ def main():
         plot_losses(
             history=history_no_attn,
             save_path=os.path.join(args.save_dir, "losses_no_attn.png"),
+            show_plot=args.show_plots,
         )
 
         print("\n" + "=" * 50)
@@ -311,6 +319,7 @@ def main():
         plot_losses(
             history=history_attn,
             save_path=os.path.join(args.save_dir, "losses_attn.png"),
+            show_plot=args.show_plots,
         )
     else:
         # Load model weights

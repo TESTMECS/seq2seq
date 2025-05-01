@@ -1,6 +1,6 @@
 # Sequence-to-Sequence Translation Model
 
-This repository contains an implementation of a sequence-to-sequence model for machine translation, with and without attention mechanism.
+This repository contains an implementation of a sequence-to-sequence model for machine translation, with and without attention mechanism. The implementation uses PyTorch and includes comprehensive visualization tools.
 
 ## Features
 
@@ -13,6 +13,8 @@ This repository contains an implementation of a sequence-to-sequence model for m
 - Training and evaluation utilities
 - BLEU score calculation
 - Visualization of training progress
+- Attention weight visualization
+- Model comparison tools
 
 ## Getting Started
 
@@ -43,15 +45,25 @@ uv run run_minimal.py
 
 This version uses a completely synthetic dataset and simplified training loop.
 
-#### 2. Hybrid Implementation (Recommended for Testing)
+#### 2. Comprehensive Implementation with Visualizations
 
-A balanced approach that creates synthetic data but uses the original model structure:
+The most complete implementation with excellent visualizations:
 
 ```bash
-uv run main_hybrid.py
+uv run final_run.py
 ```
 
-#### 3. Simplified Implementation
+This runs both models (with and without attention) and generates detailed comparison visualizations.
+
+#### 3. Custom Training and Visualization
+
+Train and visualize models with custom parameters:
+
+```bash
+uv run train_and_visualize.py --compare --hidden-dim 128 --n-epochs 5 --num-samples 2000
+```
+
+#### 4. Simplified Implementation
 
 If you want to use the pre-trained tokenizers with synthetic data:
 
@@ -59,7 +71,7 @@ If you want to use the pre-trained tokenizers with synthetic data:
 uv run main_simplified.py
 ```
 
-#### 4. Full Implementation
+#### 5. Full Implementation
 
 To use the full implementation with IWSLT dataset (requires datasets package):
 
@@ -67,37 +79,62 @@ To use the full implementation with IWSLT dataset (requires datasets package):
 uv run main.py --n_epochs 5 --batch_size 32
 ```
 
-Custom training settings:
+### Visualizing Results
+
+To visualize attention weights:
 
 ```bash
-uv run main.py --batch_size 64 --hidden_dim 512 --emb_dim 256
+uv run visualize_attention.py
 ```
 
-### Command-line Arguments
+To generate comprehensive model architecture and comparison visualizations:
 
-Main training parameters:
-- `--batch_size`: Batch size (default: 32)
-- `--hidden_dim`: Hidden dimension size (default: 256)
-- `--emb_dim`: Embedding dimension size (default: 128)
-- `--n_epochs`: Number of epochs (default: 10)
+```bash
+uv run visualize_results.py
+```
+
+### Command-line Arguments for train_and_visualize.py
+
+- `--src-vocab-size`: Source vocabulary size (default: 100)
+- `--tgt-vocab-size`: Target vocabulary size (default: 100)
+- `--hidden-dim`: Hidden dimension size (default: 64)
+- `--emb-dim`: Embedding dimension size (default: 32)
+- `--n-layers`: Number of RNN layers (default: 1)
+- `--dropout`: Dropout rate (default: 0.2)
+- `--batch-size`: Batch size (default: 32)
+- `--n-epochs`: Number of epochs (default: 3)
+- `--clip`: Gradient clipping value (default: 1.0)
 - `--lr`: Learning rate (default: 0.001)
-
-For a full list of parameters, see the help:
-```
-uv run main.py --help
-```
+- `--patience`: Early stopping patience (default: 5)
+- `--tf-ratio`: Teacher forcing ratio (default: 0.5)
+- `--num-samples`: Number of synthetic samples (default: 2000)
+- `--max-len`: Maximum sequence length (default: 10)
+- `--seed`: Random seed (default: 42)
+- `--no-attention`: Train model without attention
+- `--attention`: Train model with attention
+- `--compare`: Train and compare both models (default if no model type specified)
+- `--save-dir`: Directory to save models and plots (default: "models")
+- `--cpu`: Force using CPU even if GPU is available
+- `--show-plots`: Show plots during training
 
 ## Project Structure
 
-- `main.py`: Main script for training and evaluation
-- `main_simplified.py`: Simplified version using synthetic data
-- `run_minimal.py`: Minimal working example
-- `main_hybrid.py`: Hybrid implementation
+- `main.py`: Main script for training and evaluation (fixed version)
+- `main_simplified.py`: Simplified version using the original structure
+- `final_run.py`: Complete implementation with synthetic data
 - `data.py`: Data loading and preprocessing
 - `model.py`: Seq2Seq model architecture
 - `train.py`: Training and evaluation functions
 - `utils.py`: Utility functions
 - `prepare_tokenizers.py`: Script to create tokenizers
+- `train_and_visualize.py`: Interactive script for training and visualization
+- `visualize_results.py`: Script for comprehensive visualizations
+- `visualize_attention.py`: Script for attention weight visualization
+- `tests/`: Unit and integration tests
+- `RESULTS_ANALYSIS.md`: Detailed analysis of model results
+- `FIXES.md`: Documentation of issues and fixes
+- `SOLUTIONS.md`: Alternative solutions implemented
+- `SUMMARY.md`: Summary of the project and findings
 
 ## Implementation Details
 
@@ -105,11 +142,21 @@ The implementation includes two models:
 1. Basic Seq2Seq model without attention
 2. Seq2Seq model with attention mechanism
 
-Both models are trained and evaluated on the same data, allowing for direct comparison.
+Both models can be trained on the IWSLT 2017 dataset for English-French translation or on synthetic data for testing and demonstration purposes.
 
 ### Attention Mechanism
 
-The attention mechanism allows the decoder to focus on different parts of the input sequence at each decoding step, typically improving translation quality for longer sentences.
+The attention mechanism allows the decoder to focus on different parts of the input sequence at each decoding step, which typically improves translation quality, especially for longer sentences. The visualization tools help understand how attention works in practice.
+
+### Visualization Tools
+
+The repository includes several visualization tools:
+- Training and validation loss plots
+- Model architecture visualization
+- Attention weight visualizations
+- Model comparison plots
+
+These tools help understand the model's behavior and the impact of different architectural choices.
 
 ## Troubleshooting
 
