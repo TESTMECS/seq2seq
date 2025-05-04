@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 import time
-from typing import Dict, List, Optional
+from typing import Dict, List
 from tqdm import tqdm
 
 from seq2seq.core import Seq2Seq
@@ -40,9 +40,9 @@ def train_epoch(
     model.train()
     epoch_loss = 0
     total_batches = len(dataloader)
-    
+
     progress_bar = tqdm(dataloader, desc="Training", leave=False)
-    
+
     for batch_idx, batch in enumerate(progress_bar):
         # Get data
         src = batch["src"].to(device)  # [batch_size, src_len]
@@ -78,18 +78,22 @@ def train_epoch(
         # Update epoch loss
         batch_loss = loss.item()
         epoch_loss += batch_loss
-        
+
         # Update progress bar
-        progress_bar.set_postfix({
-            'batch': f'{batch_idx+1}/{total_batches}',
-            'loss': f'{batch_loss:.4f}',
-            'avg_loss': f'{epoch_loss/(batch_idx+1):.4f}'
-        })
-        
+        progress_bar.set_postfix(
+            {
+                "batch": f"{batch_idx + 1}/{total_batches}",
+                "loss": f"{batch_loss:.4f}",
+                "avg_loss": f"{epoch_loss / (batch_idx + 1):.4f}",
+            }
+        )
+
         # Print detailed batch info every 10 batches
         if (batch_idx + 1) % 10 == 0 or batch_idx == 0:
             avg_loss = epoch_loss / (batch_idx + 1)
-            print(f"Batch {batch_idx+1}/{total_batches} | Loss: {batch_loss:.4f} | Avg Loss: {avg_loss:.4f}")
+            print(
+                f"Batch {batch_idx + 1}/{total_batches} | Loss: {batch_loss:.4f} | Avg Loss: {avg_loss:.4f}"
+            )
 
     avg_epoch_loss = epoch_loss / total_batches
     print(f"Epoch completed | Avg Loss: {avg_epoch_loss:.4f}")
@@ -120,7 +124,7 @@ def evaluate(
 
     with torch.no_grad():
         progress_bar = tqdm(dataloader, desc="Evaluating", leave=False)
-        
+
         for batch_idx, batch in enumerate(progress_bar):
             # Get data
             src = batch["src"].to(device)  # [batch_size, src_len]
@@ -144,14 +148,16 @@ def evaluate(
             # Update epoch loss
             batch_loss = loss.item()
             epoch_loss += batch_loss
-            
+
             # Update progress bar
-            progress_bar.set_postfix({
-                'batch': f'{batch_idx+1}/{total_batches}',
-                'loss': f'{batch_loss:.4f}',
-                'avg_loss': f'{epoch_loss/(batch_idx+1):.4f}'
-            })
-    
+            progress_bar.set_postfix(
+                {
+                    "batch": f"{batch_idx + 1}/{total_batches}",
+                    "loss": f"{batch_loss:.4f}",
+                    "avg_loss": f"{epoch_loss / (batch_idx + 1):.4f}",
+                }
+            )
+
     avg_loss = epoch_loss / total_batches
     print(f"Validation | Avg Loss: {avg_loss:.4f}")
     return avg_loss

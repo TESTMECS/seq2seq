@@ -19,7 +19,12 @@ def main():
     parser.add_argument("--tgt_lang", type=str, default="fr", help="Target language")
     parser.add_argument("--hidden_dim", type=int, default=256, help="Hidden dimension size")
     parser.add_argument("--emb_dim", type=int, default=128, help="Embedding dimension size")
-    parser.add_argument("--n_layers", type=int, default=2, help="Number of layers in encoder and decoder")
+    parser.add_argument(
+        "--n_layers",
+        type=int,
+        default=2,
+        help="Number of layers in encoder and decoder",
+    )
     parser.add_argument("--dropout", type=float, default=0.2, help="Dropout probability")
     parser.add_argument("--device", type=str, default=None, help="Device to use (cuda/cpu)")
     parser.add_argument("--model_path", type=str, required=True, help="Path to the model")
@@ -82,14 +87,19 @@ def main():
         sentence = input("> ")
 
     # Translate
-    translation, attention_weights = translate_sentence(
-        model=model,
-        sentence=sentence,
-        src_tokenizer=src_tokenizer,
-        tgt_tokenizer=tgt_tokenizer,
-        device=device,
-        max_len=args.max_len,
-    )
+    try:
+        translation, attention_weights = translate_sentence(
+            model=model,
+            sentence=sentence,
+            src_tokenizer=src_tokenizer,
+            tgt_tokenizer=tgt_tokenizer,
+            device=device,
+            max_len=args.max_len,
+        )
+    except Exception as e:
+        print(f"Error during translation: {e}")
+        translation = "Error: Could not translate sentence"
+        attention_weights = None
 
     # Print results
     print(f"\nSource: {sentence}")
@@ -112,7 +122,7 @@ def main():
         tgt_tokens = [t for t in tgt_tokens if t not in ["[BOS]", "[EOS]", "[PAD]", "[UNK]"]]
 
         # Trim attention weights to actual tokens
-        attention_weights = attention_weights[:len(tgt_tokens), :len(src_tokens)]
+        attention_weights = attention_weights[: len(tgt_tokens), : len(src_tokens)]
 
         # Plot heatmap
         im = ax.imshow(attention_weights, cmap="viridis")

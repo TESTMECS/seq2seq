@@ -54,7 +54,7 @@ class BatchSampler:
         # Create batches
         batches = []
         for i in range(0, len(indices), self.batch_size):
-            batch_indices = indices[i:i + self.batch_size]
+            batch_indices = indices[i : i + self.batch_size]
             if len(batch_indices) > 0:  # Ensure we don't add empty batches
                 batches.append(batch_indices.tolist())
 

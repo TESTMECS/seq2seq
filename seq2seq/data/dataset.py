@@ -4,7 +4,7 @@ Dataset implementation for sequence-to-sequence translation.
 
 import torch
 from torch.utils.data import Dataset
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List
 
 
 class TranslationDataset(Dataset):

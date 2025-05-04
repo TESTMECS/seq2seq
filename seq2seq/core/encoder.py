@@ -1,5 +1,6 @@
 """
 Encoder module for the sequence-to-sequence model.
+(b)
 """
 
 import torch

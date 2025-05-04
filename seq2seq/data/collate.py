@@ -3,7 +3,7 @@ Collate functions for data batching.
 """
 
 import torch
-from typing import Dict, List, Any
+from typing import Dict, List
 
 
 def collate_fn(batch: List[Dict[str, List[int]]]) -> Dict[str, torch.Tensor]:

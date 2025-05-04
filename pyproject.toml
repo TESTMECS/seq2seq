@@ -19,7 +19,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.3.1",
     "ruff>=0.0.270",
 ]
 
@@ -27,10 +26,14 @@ dev = [
 seq2seq-train = "seq2seq.scripts.train_cli:main"
 seq2seq-translate = "seq2seq.scripts.translate_cli:main"
 seq2seq-prepare = "seq2seq.scripts.prepare_cli:main"
+seq2seq-inspect = "seq2seq.scripts.inspect_model:main"
 
 [build-system]
 requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["seq2seq"]
 
 [tool.ruff]
 line-length = 100

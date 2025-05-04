@@ -1,5 +1,6 @@
 """
 Command-line interface for training sequence-to-sequence models.
+
 """
 
 import argparse
@@ -85,7 +86,12 @@ def main():
     parser.add_argument("--max_length", type=int, default=100, help="Maximum sequence length")
     parser.add_argument("--hidden_dim", type=int, default=256, help="Hidden dimension size")
     parser.add_argument("--emb_dim", type=int, default=128, help="Embedding dimension size")
-    parser.add_argument("--n_layers", type=int, default=2, help="Number of layers in encoder and decoder")
+    parser.add_argument(
+        "--n_layers",
+        type=int,
+        default=2,
+        help="Number of layers in encoder and decoder",
+    )
     parser.add_argument("--dropout", type=float, default=0.2, help="Dropout probability")
     parser.add_argument("--n_epochs", type=int, default=10, help="Number of epochs")
     parser.add_argument("--clip", type=float, default=1.0, help="Gradient clipping value")
@@ -95,7 +101,9 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--device", type=str, default=None, help="Device to use (cuda/cpu)")
     parser.add_argument("--save_dir", type=str, default="models", help="Directory to save models")
-    parser.add_argument("--test_only", action="store_true", help="Only test the model (no training)")
+    parser.add_argument(
+        "--test_only", action="store_true", help="Only test the model (no training)"
+    )
     parser.add_argument("--attention", action="store_true", help="Use attention mechanism")
     args = parser.parse_args()
 
@@ -134,7 +142,7 @@ def main():
     # Model paths
     model_name = f"model_{'attn' if args.attention else 'no_attn'}.pt"
     model_path = os.path.join(args.save_dir, model_name)
-    
+
     # Create model
     model = create_model(
         src_vocab_size=src_vocab_size,
@@ -149,6 +157,12 @@ def main():
     model = model.to(device)
 
     # Create loss function
+    # If pad_idx is None, use -100 (PyTorch's default ignore_index)
+    if pad_idx is None:
+        pad_idx = -100
+        print(
+            "Warning: [PAD] token not found in target tokenizer. Using default ignore_index (-100)."
+        )
     criterion = Seq2SeqLoss(pad_idx=pad_idx)
 
     # Test-only mode

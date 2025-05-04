@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import numpy as np
-from typing import Tuple, Any, List
+from typing import Tuple, Any
 from tqdm import tqdm
 
 from seq2seq.utils.metrics import bleu_score

@@ -1,14 +1,13 @@
 """
 Data loading utilities for machine translation.
+(a)
 """
 
 import torch
 from torch.utils.data import DataLoader
-import numpy as np
 from typing import Dict, List, Tuple, Any, Optional
 from datasets import load_dataset
 from tokenizers import Tokenizer
-import os
 
 from seq2seq.data.dataset import TranslationDataset
 from seq2seq.data.sampler import BatchSampler
@@ -31,9 +30,7 @@ def load_tokenizers(src_lang: str, tgt_lang: str) -> Tuple[Tokenizer, Tokenizer]
     return src_tokenizer, tgt_tokenizer
 
 
-def load_iwslt_data(
-    src_lang: str, tgt_lang: str, split: str
-) -> Tuple[List[str], List[str]]:
+def load_iwslt_data(src_lang: str, tgt_lang: str, split: str) -> Tuple[List[str], List[str]]:
     """
     Load IWSLT dataset for specified languages and split.
 
@@ -45,9 +42,9 @@ def load_iwslt_data(
     Returns:
         Tuple of source and target texts
     """
-    dataset = load_dataset("iwslt2017", f"{src_lang}-{tgt_lang}", split=split)
-    src_texts = dataset["translation"][src_lang]
-    tgt_texts = dataset["translation"][tgt_lang]
+    dataset = load_dataset("iwslt2017", f"iwslt2017-{src_lang}-{tgt_lang}", split=split)
+    src_texts = [item["translation"][src_lang] for item in dataset]
+    tgt_texts = [item["translation"][tgt_lang] for item in dataset]
     return src_texts, tgt_texts
 
 
@@ -86,7 +83,7 @@ def prepare_data(
         for src, tgt in zip(src_texts, tgt_texts):
             src_tokens = src_tokenizer.encode(src).ids
             tgt_tokens = tgt_tokenizer.encode(tgt).ids
-            
+
             # Filter out sequences that are too long
             if len(src_tokens) <= max_length and len(tgt_tokens) <= max_length:
                 src_tokenized.append(src_tokens)

@@ -1,68 +1,71 @@
-# Sequence-to-Sequence Translation Model
+# Seq2Seq Assignment 4
 
-This repository contains an implementation of a sequence-to-sequence model for machine translation, with and without attention mechanism. The implementation uses PyTorch.
+A PyTorch implementation of sequence-to-sequence models for machine translation, supporting both basic and attention-based architectures.
+## Description
 
-## Features
+The package implements two main model variants:
+1. Basic Seq2Seq Model:
+   - Encoder: Bidirectional GRU
+   - Decoder: Unidirectional GRU
+   - No attention mechanism
+   - Simple architecture suitable for basic translation tasks
+2. Attention-based Seq2Seq Model:
+   - Encoder: Bidirectional GRU
+   - Decoder: Unidirectional GRU with attention
+   - Additive attention mechanism
+   - Better performance on longer sequences
+   - Visualizable attention weights
+## File Structure
 
-- Data loading and preprocessing for IWSLT 2017 dataset (English-French by default)
-- Custom batch sampler for efficient training
-- Seq2Seq model with:
-  - Encoder (bidirectional GRU)
-  - Decoder (GRU)
-  - Optional attention mechanism
-- Training and evaluation utilities
-- BLEU score calculation
-- Visualization of training progress
+The package is structured as follows:
+
+```
+seq2seq/
+├── core/          # Encoder, Decoder, Attention, Loss classes
+├── data/          # Data loader and preprocessing. 
+├── training/      # Training and Visualization
+├── utils/         # Utility functions
+├── scripts/       # Command-line interfaces also in pyproject.toml
+└── visualization/ # Visualization utilities
+```
 
 ## Installation
-
+Create the virtual environment and install dependencies:
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd seq2seq
-
-# Install dependencies
-uv add torch numpy tqdm matplotlib datasets tokenizers nltk ruff pytest
+uv sync 
+```
+or 
+With virtual env:
+```bash
+python -m venv .venv
+source .venv/bin/activate # venv\Scripts\activate on windows
+pip install -e .
+```
+## Prepare Tokenizers
+```bash
+# Create tokenizers for English to French
+seq2seq-prepare --src_lang en --tgt_lang fr --vocab_size 10000
+```
+## Train 
+Train with attention:
+```bash
+seq2seq-train --src_lang en --tgt_lang fr --batch_size 32 --hidden_dim 256 --attention
+```
+Train without attention:
+```bash
+seq2seq-train --src_lang en --tgt_lang fr --batch_size 32 --hidden_dim 256
+```
+## Translate
+Translate with attention:
+```bash
+seq2seq-translate --src_lang en --tgt_lang fr --hidden_dim 256 --attention
+```
+Translate without attention:
+```bash
+seq2seq-translate --src_lang en --tgt_lang fr --hidden_dim 256
+```
+## Analyze model architecture 
+```bash
+seq2seq-inspect --model_path models/model_no_attn.pt
 ```
 
-## Quick Start
-
-### Preparing Tokenizers
-
-```bash
-python -m seq2seq prepare --src_lang en --tgt_lang fr --vocab_size 10000
-```
-
-### Training
-
-```bash
-python -m seq2seq train --n_epochs 10 --attention
-```
-
-### Translation
-
-```bash
-python -m seq2seq translate --model_path models/model_attn.pt --attention --sentence "Hello, how are you?"
-```
-
-## Documentation
-
-For detailed documentation, please see:
-
-- [User Guide](docs/USAGE.md): Detailed usage instructions
-- [API Reference](docs/API.md): API documentation
-- [Contributing Guide](docs/CONTRIBUTING.md): How to contribute to the project
-
-## Package Structure
-
-- `seq2seq/`: Main package
-  - `core/`: Core model architecture
-  - `data/`: Data loading and processing
-  - `training/`: Training and evaluation
-  - `utils/`: Utility functions
-  - `scripts/`: Command-line interfaces
-  - `visualization/`: Visualization utilities
-
-## License
-
-MIT
