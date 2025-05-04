@@ -5,7 +5,7 @@ description = "Sequence-to-sequence model for machine translation"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [
-    {name = "Seq2Seq Team"}
+    {name = "Andrew Warkentin"}
 ]
 dependencies = [
     "torch>=2.0.0",
