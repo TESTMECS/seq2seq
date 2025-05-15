@@ -68,4 +68,8 @@ seq2seq-translate --src_lang en --tgt_lang fr --hidden_dim 256
 ```bash
 seq2seq-inspect --model_path models/model_no_attn.pt
 ```
-[models/model_with_attention.png]
+# Results
+## No Attention
+![translation results](./models/model_no_attention.png)
+## With Attention
+![translation results](./models/model_with_attention.png)
